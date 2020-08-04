@@ -6,6 +6,7 @@ ARG GO_VER
 ARG ALPINE_VER
 
 FROM alpine:${ALPINE_VER} as peer-base
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 RUN apk add --no-cache tzdata
 # set up nsswitch.conf for Go's "netgo" implementation
 # - https://github.com/golang/go/blob/go1.9.1/src/net/conf.go#L194-L275
@@ -13,6 +14,7 @@ RUN apk add --no-cache tzdata
 RUN echo 'hosts: files dns' > /etc/nsswitch.conf
 
 FROM golang:${GO_VER}-alpine${ALPINE_VER} as golang
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 RUN apk add --no-cache \
 	bash \
 	gcc \
