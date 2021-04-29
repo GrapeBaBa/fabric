@@ -31,16 +31,16 @@ func TestRollbackKVLedger(t *testing.T) {
 	env.closeLedgerMgmt()
 
 	// Rollback the testLedger (invalid rollback params)
-	err = kvledger.RollbackKVLedger(env.initializer.Config.RootFSPath, "noLedger", 0)
+	err = kvledger.RollbackKVLedger(env.initializer.Config.RootFSPath, env.initializer.Config.IsMmapEnabled, "noLedger", 0)
 	assert.Equal(t, "ledgerID [noLedger] does not exist", err.Error())
-	err = kvledger.RollbackKVLedger(env.initializer.Config.RootFSPath, "testLedger", bcInfo.Height)
+	err = kvledger.RollbackKVLedger(env.initializer.Config.RootFSPath, env.initializer.Config.IsMmapEnabled, "testLedger", bcInfo.Height)
 	expectedErr := fmt.Sprintf("target block number [%d] should be less than the biggest block number [%d]",
 		bcInfo.Height, bcInfo.Height-1)
 	assert.Equal(t, expectedErr, err.Error())
 
 	// Rollback the testLedger (valid rollback params)
 	targetBlockNum := bcInfo.Height - 3
-	err = kvledger.RollbackKVLedger(env.initializer.Config.RootFSPath, "testLedger", targetBlockNum)
+	err = kvledger.RollbackKVLedger(env.initializer.Config.RootFSPath, env.initializer.Config.IsMmapEnabled, "testLedger", targetBlockNum)
 	assert.NoError(t, err)
 	rebuildable := rebuildableStatedb + rebuildableBookkeeper + rebuildableConfigHistory + rebuildableHistoryDB
 	env.verifyRebuilableDirEmpty(rebuildable)
@@ -113,7 +113,7 @@ func TestRollbackKVLedgerWithBTL(t *testing.T) {
 	env.closeLedgerMgmt()
 
 	// rebuild statedb and bookkeeper
-	err := kvledger.RollbackKVLedger(env.initializer.Config.RootFSPath, "ledger1", 4)
+	err := kvledger.RollbackKVLedger(env.initializer.Config.RootFSPath, env.initializer.Config.IsMmapEnabled, "ledger1", 4)
 	assert.NoError(t, err)
 	rebuildable := rebuildableStatedb | rebuildableBookkeeper | rebuildableConfigHistory | rebuildableHistoryDB
 	env.verifyRebuilableDirEmpty(rebuildable)

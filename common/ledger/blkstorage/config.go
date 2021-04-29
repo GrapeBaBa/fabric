@@ -20,15 +20,16 @@ const (
 type Conf struct {
 	blockStorageDir  string
 	maxBlockfileSize int
+	isMmapEnabled    bool
 }
 
 // NewConf constructs new `Conf`.
 // blockStorageDir is the top level folder under which `BlockStore` manages its data
-func NewConf(blockStorageDir string, maxBlockfileSize int) *Conf {
+func NewConf(blockStorageDir string, maxBlockfileSize int, isMmapEnabled bool) *Conf {
 	if maxBlockfileSize <= 0 {
 		maxBlockfileSize = defaultMaxBlockfileSize
 	}
-	return &Conf{blockStorageDir, maxBlockfileSize}
+	return &Conf{blockStorageDir, maxBlockfileSize, isMmapEnabled}
 }
 
 func (conf *Conf) getIndexDir() string {

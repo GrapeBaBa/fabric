@@ -22,7 +22,7 @@ import (
 )
 
 func TestBlockfileMgrBlockReadWrite(t *testing.T) {
-	env := newTestEnv(t, NewConf(testPath(), 0))
+	env := newTestEnv(t, NewConf(testPath(), 0, true))
 	defer env.Cleanup()
 	blkfileMgrWrapper := newTestBlockfileWrapper(env, "testLedger")
 	defer blkfileMgrWrapper.close()
@@ -33,7 +33,7 @@ func TestBlockfileMgrBlockReadWrite(t *testing.T) {
 }
 
 func TestAddBlockWithWrongHash(t *testing.T) {
-	env := newTestEnv(t, NewConf(testPath(), 0))
+	env := newTestEnv(t, NewConf(testPath(), 0, true))
 	defer env.Cleanup()
 	blkfileMgrWrapper := newTestBlockfileWrapper(env, "testLedger")
 	defer blkfileMgrWrapper.close()
@@ -64,7 +64,7 @@ func TestBlockfileMgrCrashDuringWriting(t *testing.T) {
 func testBlockfileMgrCrashDuringWriting(t *testing.T, numBlksBeforeSavingBlkfilesInfo int,
 	numBlksAfterSavingBlkfilesInfo int, numLastBlockBytes int, numPartialBytesToWrite int,
 	deleteBFInfo bool) {
-	env := newTestEnv(t, NewConf(testPath(), 0))
+	env := newTestEnv(t, NewConf(testPath(), 0, true))
 	defer env.Cleanup()
 	ledgerid := "testLedger"
 	blkfileMgrWrapper := newTestBlockfileWrapper(env, ledgerid)
@@ -128,7 +128,7 @@ func testBlockfileMgrCrashDuringWriting(t *testing.T, numBlksBeforeSavingBlkfile
 }
 
 func TestBlockfileMgrBlockIterator(t *testing.T) {
-	env := newTestEnv(t, NewConf(testPath(), 0))
+	env := newTestEnv(t, NewConf(testPath(), 0, true))
 	defer env.Cleanup()
 	blkfileMgrWrapper := newTestBlockfileWrapper(env, "testLedger")
 	defer blkfileMgrWrapper.close()
@@ -156,7 +156,7 @@ func testBlockfileMgrBlockIterator(t *testing.T, blockfileMgr *blockfileMgr,
 }
 
 func TestBlockfileMgrBlockchainInfo(t *testing.T) {
-	env := newTestEnv(t, NewConf(testPath(), 0))
+	env := newTestEnv(t, NewConf(testPath(), 0, true))
 	defer env.Cleanup()
 	blkfileMgrWrapper := newTestBlockfileWrapper(env, "testLedger")
 	defer blkfileMgrWrapper.close()
@@ -171,7 +171,7 @@ func TestBlockfileMgrBlockchainInfo(t *testing.T) {
 }
 
 func TestBlockfileMgrGetTxById(t *testing.T) {
-	env := newTestEnv(t, NewConf(testPath(), 0))
+	env := newTestEnv(t, NewConf(testPath(), 0, true))
 	defer env.Cleanup()
 	blkfileMgrWrapper := newTestBlockfileWrapper(env, "testLedger")
 	defer blkfileMgrWrapper.close()
@@ -194,7 +194,7 @@ func TestBlockfileMgrGetTxById(t *testing.T) {
 // TestBlockfileMgrGetTxByIdDuplicateTxid tests that a transaction with an existing txid
 // (within same block or a different block) should not over-write the index by-txid (FAB-8557)
 func TestBlockfileMgrGetTxByIdDuplicateTxid(t *testing.T) {
-	env := newTestEnv(t, NewConf(testPath(), 0))
+	env := newTestEnv(t, NewConf(testPath(), 0, true))
 	defer env.Cleanup()
 	blkStore, err := env.provider.Open("testLedger")
 	require.NoError(env.t, err)
@@ -309,7 +309,7 @@ func TestBlockfileMgrGetTxByIdDuplicateTxid(t *testing.T) {
 }
 
 func TestBlockfileMgrGetTxByBlockNumTranNum(t *testing.T) {
-	env := newTestEnv(t, NewConf(testPath(), 0))
+	env := newTestEnv(t, NewConf(testPath(), 0, true))
 	defer env.Cleanup()
 	blkfileMgrWrapper := newTestBlockfileWrapper(env, "testLedger")
 	defer blkfileMgrWrapper.close()
@@ -328,7 +328,7 @@ func TestBlockfileMgrGetTxByBlockNumTranNum(t *testing.T) {
 }
 
 func TestBlockfileMgrRestart(t *testing.T) {
-	env := newTestEnv(t, NewConf(testPath(), 0))
+	env := newTestEnv(t, NewConf(testPath(), 0, true))
 	defer env.Cleanup()
 	ledgerid := "testLedger"
 	blkfileMgrWrapper := newTestBlockfileWrapper(env, ledgerid)
@@ -357,7 +357,7 @@ func TestBlockfileMgrFileRolling(t *testing.T) {
 	}
 
 	maxFileSie := int(0.75 * float64(size))
-	env := newTestEnv(t, NewConf(testPath(), maxFileSie))
+	env := newTestEnv(t, NewConf(testPath(), maxFileSie, true))
 	defer env.Cleanup()
 	ledgerid := "testLedger"
 	blkfileMgrWrapper := newTestBlockfileWrapper(env, ledgerid)
@@ -374,7 +374,7 @@ func TestBlockfileMgrFileRolling(t *testing.T) {
 }
 
 func TestBlockfileMgrGetBlockByTxID(t *testing.T) {
-	env := newTestEnv(t, NewConf(testPath(), 0))
+	env := newTestEnv(t, NewConf(testPath(), 0, true))
 	defer env.Cleanup()
 	blkfileMgrWrapper := newTestBlockfileWrapper(env, "testLedger")
 	defer blkfileMgrWrapper.close()
@@ -405,7 +405,7 @@ func TestBlockfileMgrSimulateCrashAtFirstBlockInFile(t *testing.T) {
 
 func testBlockfileMgrSimulateCrashAtFirstBlockInFile(t *testing.T, deleteBlkfilesInfo bool) {
 	// open blockfileMgr and add 5 blocks
-	env := newTestEnv(t, NewConf(testPath(), 0))
+	env := newTestEnv(t, NewConf(testPath(), 0, true))
 	defer env.Cleanup()
 
 	blkfileMgrWrapper := newTestBlockfileWrapper(env, "testLedger")

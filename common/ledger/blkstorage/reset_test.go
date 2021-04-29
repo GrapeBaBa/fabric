@@ -23,7 +23,7 @@ import (
 func TestResetToGenesisBlkSingleBlkFile(t *testing.T) {
 	blockStoreRootDir := "/tmp/testBlockStoreReset"
 	require.NoError(t, os.RemoveAll(blockStoreRootDir))
-	env := newTestEnv(t, NewConf(blockStoreRootDir, 0))
+	env := newTestEnv(t, NewConf(blockStoreRootDir, 0, true))
 	defer env.Cleanup()
 	provider := env.provider
 	store, err := provider.Open("ledger1")
@@ -39,7 +39,7 @@ func TestResetToGenesisBlkSingleBlkFile(t *testing.T) {
 
 	ledgerDir := (&Conf{blockStorageDir: blockStoreRootDir}).getLedgerBlockDir("ledger1")
 
-	_, lastOffsetOriginal, numBlocksOriginal, err := scanForLastCompleteBlock(ledgerDir, 0, 0)
+	_, lastOffsetOriginal, numBlocksOriginal, err := scanForLastCompleteBlock(ledgerDir, true, 0, 0)
 	t.Logf("lastOffsetOriginal=%d", lastOffsetOriginal)
 	require.NoError(t, err)
 	require.Equal(t, 50, numBlocksOriginal)
@@ -47,7 +47,7 @@ func TestResetToGenesisBlkSingleBlkFile(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, fileInfo.Size(), lastOffsetOriginal)
 
-	resetToGenesisBlk(ledgerDir)
+	resetToGenesisBlk(ledgerDir, true)
 	assertBlocksDirOnlyFileWithGenesisBlock(t, ledgerDir, blocks[0])
 }
 
@@ -56,7 +56,7 @@ func TestResetToGenesisBlkMultipleBlkFiles(t *testing.T) {
 	require.NoError(t, os.RemoveAll(blockStoreRootDir))
 	blocks := testutil.ConstructTestBlocks(t, 20) // 20 blocks persisted in ~5 block files
 	blocksPerFile := 20 / 5
-	env := newTestEnv(t, NewConf(blockStoreRootDir, 0))
+	env := newTestEnv(t, NewConf(blockStoreRootDir, 0, true))
 	defer env.Cleanup()
 	provider := env.provider
 	store, err := provider.Open("ledger1")
@@ -75,7 +75,7 @@ func TestResetToGenesisBlkMultipleBlkFiles(t *testing.T) {
 	files, err := ioutil.ReadDir(ledgerDir)
 	require.NoError(t, err)
 	require.Len(t, files, 5)
-	resetToGenesisBlk(ledgerDir)
+	resetToGenesisBlk(ledgerDir, true)
 	assertBlocksDirOnlyFileWithGenesisBlock(t, ledgerDir, blocks[0])
 }
 
@@ -86,7 +86,7 @@ func TestResetBlockStore(t *testing.T) {
 	blocks2 := testutil.ConstructTestBlocks(t, 40) // 40 blocks persisted in ~5 block files
 	maxFileSie := int(0.2 * float64(testutilEstimateTotalSizeOnDisk(t, blocks1)))
 
-	env := newTestEnv(t, NewConf(blockStoreRootDir, maxFileSie))
+	env := newTestEnv(t, NewConf(blockStoreRootDir, maxFileSie, true))
 	defer env.Cleanup()
 	provider := env.provider
 	store1, err := provider.Open("ledger1")
@@ -105,7 +105,7 @@ func TestResetBlockStore(t *testing.T) {
 	store2.Shutdown()
 	provider.Close()
 
-	require.NoError(t, ResetBlockStore(blockStoreRootDir))
+	require.NoError(t, ResetBlockStore(blockStoreRootDir, true))
 	// test load and clear preResetHeight for ledger1 and ledger2
 	ledgerIDs := []string{"ledger1", "ledger2"}
 	h, err := LoadPreResetHeight(blockStoreRootDir, ledgerIDs)
@@ -118,7 +118,7 @@ func TestResetBlockStore(t *testing.T) {
 		h,
 	)
 
-	env = newTestEnv(t, NewConf(blockStoreRootDir, maxFileSie))
+	env = newTestEnv(t, NewConf(blockStoreRootDir, maxFileSie, true))
 	provider = env.provider
 	store1, _ = provider.Open("ledger1")
 	store2, _ = provider.Open("ledger2")
@@ -134,7 +134,7 @@ func TestResetBlockStore(t *testing.T) {
 	)
 
 	// reset again to test load and clear preResetHeight for ledger2
-	require.NoError(t, ResetBlockStore(blockStoreRootDir))
+	require.NoError(t, ResetBlockStore(blockStoreRootDir, true))
 	ledgerIDs = []string{"ledger2"}
 	h, err = LoadPreResetHeight(blockStoreRootDir, ledgerIDs)
 	require.NoError(t, err)
@@ -159,7 +159,7 @@ func TestResetBlockStore(t *testing.T) {
 func TestRecordHeight(t *testing.T) {
 	blockStoreRootDir := "/tmp/testBlockStoreReset"
 	require.NoError(t, os.RemoveAll(blockStoreRootDir))
-	env := newTestEnv(t, NewConf(blockStoreRootDir, 0))
+	env := newTestEnv(t, NewConf(blockStoreRootDir, 0, true))
 	defer env.Cleanup()
 	provider := env.provider
 	store, err := provider.Open("ledger1")
@@ -172,14 +172,14 @@ func TestRecordHeight(t *testing.T) {
 		require.NoError(t, store.AddBlock(b))
 	}
 	ledgerDir := (&Conf{blockStorageDir: blockStoreRootDir}).getLedgerBlockDir("ledger1")
-	require.NoError(t, recordHeightIfGreaterThanPreviousRecording(ledgerDir))
+	require.NoError(t, recordHeightIfGreaterThanPreviousRecording(ledgerDir, true))
 	assertRecordedHeight(t, ledgerDir, "50")
 
 	// Add 10 more blocks, record again and require that the previous recorded info is overwritten with new current height
 	for _, b := range blocks[50:] {
 		require.NoError(t, store.AddBlock(b))
 	}
-	require.NoError(t, recordHeightIfGreaterThanPreviousRecording(ledgerDir))
+	require.NoError(t, recordHeightIfGreaterThanPreviousRecording(ledgerDir, true))
 	assertRecordedHeight(t, ledgerDir, "60")
 
 	// truncate the most recent block file to half
@@ -191,10 +191,10 @@ func TestRecordHeight(t *testing.T) {
 	fileInfo, err := os.Stat(lastFile)
 	require.NoError(t, err)
 	require.NoError(t, os.Truncate(lastFile, fileInfo.Size()/2))
-	blkfilesInfo, err := constructBlockfilesInfo(ledgerDir)
+	blkfilesInfo, err := constructBlockfilesInfo(ledgerDir, true)
 	require.NoError(t, err)
 	require.True(t, blkfilesInfo.lastPersistedBlock < 59)
-	require.NoError(t, recordHeightIfGreaterThanPreviousRecording(ledgerDir))
+	require.NoError(t, recordHeightIfGreaterThanPreviousRecording(ledgerDir, true))
 	assertRecordedHeight(t, ledgerDir, "60")
 }
 
@@ -204,7 +204,7 @@ func assertBlocksDirOnlyFileWithGenesisBlock(t *testing.T, ledgerDir string, gen
 	require.Len(t, files, 2)
 	require.Equal(t, "__backupGenesisBlockBytes", files[0].Name())
 	require.Equal(t, "blockfile_000000", files[1].Name())
-	blockBytes, lastOffset, numBlocks, err := scanForLastCompleteBlock(ledgerDir, 0, 0)
+	blockBytes, lastOffset, numBlocks, err := scanForLastCompleteBlock(ledgerDir, true, 0, 0)
 	require.NoError(t, err)
 	t.Logf("lastOffset=%d", lastOffset)
 	require.Equal(t, 1, numBlocks)

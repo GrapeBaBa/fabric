@@ -29,6 +29,9 @@ github.com/Shopify/sarama/mocks
 github.com/VictoriaMetrics/fastcache
 # github.com/VividCortex/gohistogram v1.0.0
 ## explicit
+# github.com/akrylysov/pogreb v0.10.0
+## explicit
+github.com/akrylysov/pogreb/fs
 # github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc
 github.com/alecthomas/template
 github.com/alecthomas/template/parse

@@ -79,7 +79,7 @@ func mockCrypto() *mocks.SignerSerializer {
 }
 
 func newLedgerAndFactory(dir string, chainID string, genesisBlockSys *cb.Block) (blockledger.Factory, blockledger.ReadWriter) {
-	rlf, err := fileledger.New(dir, &disabled.Provider{})
+	rlf, err := fileledger.New(dir, true, &disabled.Provider{})
 	if err != nil {
 		panic(err)
 	}
@@ -162,7 +162,7 @@ func TestNewRegistrar(t *testing.T) {
 		require.NoError(t, err)
 		defer os.RemoveAll(tmpdir)
 
-		lf, err := fileledger.New(tmpdir, &disabled.Provider{})
+		lf, err := fileledger.New(tmpdir, true, &disabled.Provider{})
 		require.NoError(t, err)
 
 		consenters := make(map[string]consensus.Consenter)
@@ -187,7 +187,7 @@ func TestNewRegistrar(t *testing.T) {
 		require.NoError(t, err)
 		defer os.RemoveAll(tmpdir)
 
-		lf, err := fileledger.New(tmpdir, &disabled.Provider{})
+		lf, err := fileledger.New(tmpdir, true, &disabled.Provider{})
 		require.NoError(t, err)
 
 		for _, id := range []string{"foo", "bar"} {

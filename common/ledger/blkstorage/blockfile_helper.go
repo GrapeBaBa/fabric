@@ -22,7 +22,7 @@ import (
 // constructBlockfilesInfo scans the last blockfile (if any) and construct the blockfilesInfo
 // if the last file contains no block or only a partially written block (potentially because of a crash while writing block to the file),
 // this scans the second last file (if any)
-func constructBlockfilesInfo(rootDir string) (*blockfilesInfo, error) {
+func constructBlockfilesInfo(rootDir string, isMmapEnabled bool) (*blockfilesInfo, error) {
 	logger.Debugf("constructing BlockfilesInfo")
 	var lastFileNum int
 	var numBlocksInFile int
@@ -51,7 +51,7 @@ func constructBlockfilesInfo(rootDir string) (*blockfilesInfo, error) {
 
 	fileInfo := getFileInfoOrPanic(rootDir, lastFileNum)
 	logger.Debugf("Last Block file info: FileName=[%s], FileSize=[%d]", fileInfo.Name(), fileInfo.Size())
-	if lastBlockBytes, endOffsetLastBlock, numBlocksInFile, err = scanForLastCompleteBlock(rootDir, lastFileNum, 0); err != nil {
+	if lastBlockBytes, endOffsetLastBlock, numBlocksInFile, err = scanForLastCompleteBlock(rootDir, isMmapEnabled, lastFileNum, 0); err != nil {
 		logger.Errorf("Error scanning last file [num=%d]: %s", lastFileNum, err)
 		return nil, err
 	}
@@ -60,7 +60,7 @@ func constructBlockfilesInfo(rootDir string) (*blockfilesInfo, error) {
 		secondLastFileNum := lastFileNum - 1
 		fileInfo := getFileInfoOrPanic(rootDir, secondLastFileNum)
 		logger.Debugf("Second last Block file info: FileName=[%s], FileSize=[%d]", fileInfo.Name(), fileInfo.Size())
-		if lastBlockBytes, _, _, err = scanForLastCompleteBlock(rootDir, secondLastFileNum, 0); err != nil {
+		if lastBlockBytes, _, _, err = scanForLastCompleteBlock(rootDir, isMmapEnabled, secondLastFileNum, 0); err != nil {
 			logger.Errorf("Error scanning second last file [num=%d]: %s", secondLastFileNum, err)
 			return nil, err
 		}
@@ -87,8 +87,8 @@ func constructBlockfilesInfo(rootDir string) (*blockfilesInfo, error) {
 // binarySearchFileNumForBlock locates the file number that contains the given block number.
 // This function assumes that the caller invokes this function with a block number that has been committed
 // For any uncommitted block, this function returns the last file present
-func binarySearchFileNumForBlock(rootDir string, blockNum uint64) (int, error) {
-	blkfilesInfo, err := constructBlockfilesInfo(rootDir)
+func binarySearchFileNumForBlock(rootDir string, isMmapEnabled bool, blockNum uint64) (int, error) {
+	blkfilesInfo, err := constructBlockfilesInfo(rootDir, isMmapEnabled)
 	if err != nil {
 		return -1, err
 	}
@@ -98,7 +98,7 @@ func binarySearchFileNumForBlock(rootDir string, blockNum uint64) (int, error) {
 
 	for endFile != beginFile {
 		searchFile := beginFile + (endFile-beginFile)/2 + 1
-		n, err := retrieveFirstBlockNumFromFile(rootDir, searchFile)
+		n, err := retrieveFirstBlockNumFromFile(rootDir, isMmapEnabled, searchFile)
 		if err != nil {
 			return -1, err
 		}
@@ -114,8 +114,8 @@ func binarySearchFileNumForBlock(rootDir string, blockNum uint64) (int, error) {
 	return beginFile, nil
 }
 
-func retrieveFirstBlockNumFromFile(rootDir string, fileNum int) (uint64, error) {
-	s, err := newBlockfileStream(rootDir, fileNum, 0)
+func retrieveFirstBlockNumFromFile(rootDir string, isMmapEnabled bool, fileNum int) (uint64, error) {
+	s, err := newBlockfileStream(rootDir, isMmapEnabled, fileNum, 0)
 	if err != nil {
 		return 0, err
 	}

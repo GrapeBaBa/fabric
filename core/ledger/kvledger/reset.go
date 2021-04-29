@@ -13,7 +13,7 @@ import (
 )
 
 // ResetAllKVLedgers resets all ledger to the genesis block.
-func ResetAllKVLedgers(rootFSPath string) error {
+func ResetAllKVLedgers(rootFSPath string, isMmapEnabled bool) error {
 	fileLockPath := fileLockPath(rootFSPath)
 	fileLock := leveldbhelper.NewFileLock(fileLockPath)
 	if err := fileLock.Lock(); err != nil {
@@ -27,7 +27,7 @@ func ResetAllKVLedgers(rootFSPath string) error {
 	if err := dropDBs(rootFSPath); err != nil {
 		return err
 	}
-	if err := resetBlockStorage(rootFSPath); err != nil {
+	if err := resetBlockStorage(rootFSPath, isMmapEnabled); err != nil {
 		return err
 	}
 	logger.Info("All channel ledgers have been successfully reset to the genesis block")
@@ -48,8 +48,8 @@ func ClearPreResetHeight(rootFSPath string, ledgerIDs []string) error {
 	return blkstorage.ClearPreResetHeight(blockstorePath, ledgerIDs)
 }
 
-func resetBlockStorage(rootFSPath string) error {
+func resetBlockStorage(rootFSPath string, isMmapEnabled bool) error {
 	blockstorePath := BlockStorePath(rootFSPath)
 	logger.Infof("Resetting BlockStore to genesis block at location [%s]", blockstorePath)
-	return blkstorage.ResetBlockStore(blockstorePath)
+	return blkstorage.ResetBlockStore(blockstorePath, isMmapEnabled)
 }

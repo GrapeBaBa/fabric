@@ -9,6 +9,7 @@ package blkstorage
 import (
 	"bufio"
 	"fmt"
+	"github.com/akrylysov/pogreb/fs"
 	"io"
 	"os"
 
@@ -25,7 +26,7 @@ var ErrUnexpectedEndOfBlockfile = errors.New("unexpected end of blockfile")
 // It starts from the given offset and can traverse till the end of the file
 type blockfileStream struct {
 	fileNum       int
-	file          *os.File
+	file          fs.File
 	reader        *bufio.Reader
 	currentOffset int64
 }
@@ -35,6 +36,7 @@ type blockfileStream struct {
 // file segment until the end of the last segment (`endFileNum`)
 type blockStream struct {
 	rootDir           string
+	isMmapEnabled     bool
 	currentFileNum    int
 	endFileNum        int
 	currentFileStream *blockfileStream
@@ -51,12 +53,18 @@ type blockPlacementInfo struct {
 ///////////////////////////////////
 // blockfileStream functions
 ////////////////////////////////////
-func newBlockfileStream(rootDir string, fileNum int, startOffset int64) (*blockfileStream, error) {
+func newBlockfileStream(rootDir string, isMmapEnabled bool, fileNum int, startOffset int64) (*blockfileStream, error) {
 	filePath := deriveBlockfilePath(rootDir, fileNum)
 	logger.Debugf("newBlockfileStream(): filePath=[%s], startOffset=[%d]", filePath, startOffset)
-	var file *os.File
+	var file fs.File
 	var err error
-	if file, err = os.OpenFile(filePath, os.O_RDONLY, 0600); err != nil {
+	var fileSystem fs.FileSystem
+	if isMmapEnabled {
+		fileSystem = fs.OSMMap
+	} else {
+		fileSystem = fs.OS
+	}
+	if file, err = fileSystem.OpenFile(filePath, os.O_RDONLY, 0600); err != nil {
 		return nil, errors.Wrapf(err, "error opening block file %s", filePath)
 	}
 	var newPosition int64
@@ -145,12 +153,12 @@ func (s *blockfileStream) close() error {
 ///////////////////////////////////
 // blockStream functions
 ////////////////////////////////////
-func newBlockStream(rootDir string, startFileNum int, startOffset int64, endFileNum int) (*blockStream, error) {
-	startFileStream, err := newBlockfileStream(rootDir, startFileNum, startOffset)
+func newBlockStream(rootDir string, isMmapEnabled bool, startFileNum int, startOffset int64, endFileNum int) (*blockStream, error) {
+	startFileStream, err := newBlockfileStream(rootDir, isMmapEnabled, startFileNum, startOffset)
 	if err != nil {
 		return nil, err
 	}
-	return &blockStream{rootDir, startFileNum, endFileNum, startFileStream}, nil
+	return &blockStream{rootDir, isMmapEnabled, startFileNum, endFileNum, startFileStream}, nil
 }
 
 func (s *blockStream) moveToNextBlockfileStream() error {
@@ -159,7 +167,7 @@ func (s *blockStream) moveToNextBlockfileStream() error {
 		return err
 	}
 	s.currentFileNum++
-	if s.currentFileStream, err = newBlockfileStream(s.rootDir, s.currentFileNum, 0); err != nil {
+	if s.currentFileStream, err = newBlockfileStream(s.rootDir, s.isMmapEnabled, s.currentFileNum, 0); err != nil {
 		return err
 	}
 	return nil

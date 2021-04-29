@@ -76,7 +76,7 @@ func TestBlockSignature(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(dir)
 
-	rlf, err := fileledger.New(dir, &disabled.Provider{})
+	rlf, err := fileledger.New(dir, true, &disabled.Provider{})
 	require.NoError(t, err)
 
 	l, err := rlf.GetOrCreate("mychannel")

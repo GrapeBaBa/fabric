@@ -22,7 +22,7 @@ func TestBlockfileStream(t *testing.T) {
 }
 
 func testBlockfileStream(t *testing.T, numBlocks int) {
-	env := newTestEnv(t, NewConf(testPath(), 0))
+	env := newTestEnv(t, NewConf(testPath(), 0, true))
 	defer env.Cleanup()
 	ledgerid := "testledger"
 	w := newTestBlockfileWrapper(env, ledgerid)
@@ -30,7 +30,7 @@ func testBlockfileStream(t *testing.T, numBlocks int) {
 	w.addBlocks(blocks)
 	w.close()
 
-	s, err := newBlockfileStream(w.blockfileMgr.rootDir, 0, 0)
+	s, err := newBlockfileStream(w.blockfileMgr.rootDir, w.blockfileMgr.conf.isMmapEnabled, 0, 0)
 	defer s.close()
 	require.NoError(t, err, "Error in constructing blockfile stream")
 
@@ -63,7 +63,7 @@ func TestBlockFileStreamUnexpectedEOF(t *testing.T) {
 }
 
 func testBlockFileStreamUnexpectedEOF(t *testing.T, numBlocks int, partialBlockBytes []byte) {
-	env := newTestEnv(t, NewConf(testPath(), 0))
+	env := newTestEnv(t, NewConf(testPath(), 0, true))
 	defer env.Cleanup()
 	w := newTestBlockfileWrapper(env, "testLedger")
 	blockfileMgr := w.blockfileMgr
@@ -71,7 +71,7 @@ func testBlockFileStreamUnexpectedEOF(t *testing.T, numBlocks int, partialBlockB
 	w.addBlocks(blocks)
 	blockfileMgr.currentFileWriter.append(partialBlockBytes, true)
 	w.close()
-	s, err := newBlockfileStream(blockfileMgr.rootDir, 0, 0)
+	s, err := newBlockfileStream(blockfileMgr.rootDir, blockfileMgr.conf.isMmapEnabled, 0, 0)
 	defer s.close()
 	require.NoError(t, err, "Error in constructing blockfile stream")
 
@@ -93,7 +93,7 @@ func TestBlockStream(t *testing.T) {
 
 func testBlockStream(t *testing.T, numFiles int) {
 	ledgerID := "testLedger"
-	env := newTestEnv(t, NewConf(testPath(), 0))
+	env := newTestEnv(t, NewConf(testPath(), 0, true))
 	defer env.Cleanup()
 	w := newTestBlockfileWrapper(env, ledgerID)
 	defer w.close()
@@ -112,7 +112,7 @@ func testBlockStream(t *testing.T, numFiles int) {
 		w.addBlocks(blocks)
 		blockfileMgr.moveToNextFile()
 	}
-	s, err := newBlockStream(blockfileMgr.rootDir, 0, 0, numFiles-1)
+	s, err := newBlockStream(blockfileMgr.rootDir, blockfileMgr.conf.isMmapEnabled, 0, 0, numFiles-1)
 	defer s.close()
 	require.NoError(t, err, "Error in constructing new block stream")
 	blockCount := 0

@@ -111,7 +111,7 @@ func newBlockStorageTestEnv(t testing.TB) *testBlockStoreEnv {
 	if err != nil {
 		panic(err)
 	}
-	conf := blkstorage.NewConf(testPath, 0)
+	conf := blkstorage.NewConf(testPath, 0, true)
 
 	attrsToIndex := []blkstorage.IndexableAttr{
 		blkstorage.IndexableAttrBlockHash,

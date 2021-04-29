@@ -335,7 +335,8 @@ func TestInitializeBootstrapChannel(t *testing.T) {
 	ledgerFactory, _, err := createLedgerFactory(
 		&localconfig.TopLevel{
 			FileLedger: localconfig.FileLedger{
-				Location: fileLedgerLocation,
+				Location:      fileLedgerLocation,
+				IsMmapEnabled: true,
 			},
 		},
 		&disabled.Provider{},
@@ -391,7 +392,7 @@ func TestExtractSysChanLastConfig(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tmpdir)
 
-	rlf, err := fileledger.New(tmpdir, &disabled.Provider{})
+	rlf, err := fileledger.New(tmpdir, true, &disabled.Provider{})
 	require.NoError(t, err)
 
 	conf := genesisconfig.Load(genesisconfig.SampleInsecureSoloProfile, configtest.GetDevConfigDir())
@@ -979,7 +980,7 @@ func TestInitializeEtcdraftConsenter(t *testing.T) {
 	tmpdir, err := ioutil.TempDir("", "main_test-")
 	require.NoError(t, err)
 	defer os.RemoveAll(tmpdir)
-	rlf, err := fileledger.New(tmpdir, &disabled.Provider{})
+	rlf, err := fileledger.New(tmpdir, true, &disabled.Provider{})
 	require.NoError(t, err)
 
 	conf := genesisconfig.Load(genesisconfig.SampleInsecureSoloProfile, configtest.GetDevConfigDir())

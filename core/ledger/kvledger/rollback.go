@@ -13,7 +13,7 @@ import (
 )
 
 // RollbackKVLedger rollbacks a ledger to a specified block number
-func RollbackKVLedger(rootFSPath, ledgerID string, blockNum uint64) error {
+func RollbackKVLedger(rootFSPath string, isMmapEnabled bool, ledgerID string, blockNum uint64) error {
 	fileLockPath := fileLockPath(rootFSPath)
 	fileLock := leveldbhelper.NewFileLock(fileLockPath)
 	if err := fileLock.Lock(); err != nil {
@@ -23,7 +23,7 @@ func RollbackKVLedger(rootFSPath, ledgerID string, blockNum uint64) error {
 	defer fileLock.Unlock()
 
 	blockstorePath := BlockStorePath(rootFSPath)
-	if err := blkstorage.ValidateRollbackParams(blockstorePath, ledgerID, blockNum); err != nil {
+	if err := blkstorage.ValidateRollbackParams(blockstorePath, isMmapEnabled, ledgerID, blockNum); err != nil {
 		return err
 	}
 
@@ -34,7 +34,7 @@ func RollbackKVLedger(rootFSPath, ledgerID string, blockNum uint64) error {
 
 	logger.Info("Rolling back ledger store")
 	indexConfig := &blkstorage.IndexConfig{AttrsToIndex: attrsToIndex}
-	if err := blkstorage.Rollback(blockstorePath, ledgerID, blockNum, indexConfig); err != nil {
+	if err := blkstorage.Rollback(blockstorePath, isMmapEnabled, ledgerID, blockNum, indexConfig); err != nil {
 		return err
 	}
 	logger.Infof("The channel [%s] has been successfully rolled back to the block number [%d]", ledgerID, blockNum)

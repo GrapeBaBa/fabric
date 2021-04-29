@@ -46,7 +46,8 @@ func TestResetAllLedgers(t *testing.T) {
 
 	// Reset All kv ledgers
 	rootFSPath := env.initializer.Config.RootFSPath
-	err := kvledger.ResetAllKVLedgers(rootFSPath)
+	isMmapEnabled := env.initializer.Config.IsMmapEnabled
+	err := kvledger.ResetAllKVLedgers(rootFSPath, isMmapEnabled)
 	require.NoError(t, err)
 	rebuildable := rebuildableStatedb | rebuildableBookkeeper | rebuildableConfigHistory | rebuildableHistoryDB | rebuildableBlockIndex
 	env.verifyRebuilableDirEmpty(rebuildable)
@@ -83,7 +84,7 @@ func TestResetAllLedgers(t *testing.T) {
 
 	// reset again to test ClearPreResetHeight with different ledgerIDs
 	env.closeLedgerMgmt()
-	err = kvledger.ResetAllKVLedgers(rootFSPath)
+	err = kvledger.ResetAllKVLedgers(rootFSPath, isMmapEnabled)
 	require.NoError(t, err)
 	env.initLedgerMgmt()
 	// verify LoadPreResetHeight with different ledgerIDs
@@ -152,7 +153,7 @@ func TestResetAllLedgersWithBTL(t *testing.T) {
 	env.closeLedgerMgmt()
 
 	// reset ledgers to genesis block
-	err := kvledger.ResetAllKVLedgers(env.initializer.Config.RootFSPath)
+	err := kvledger.ResetAllKVLedgers(env.initializer.Config.RootFSPath, env.initializer.Config.IsMmapEnabled)
 	require.NoError(t, err)
 	rebuildable := rebuildableStatedb | rebuildableBookkeeper | rebuildableConfigHistory | rebuildableHistoryDB | rebuildableBlockIndex
 	env.verifyRebuilableDirEmpty(rebuildable)
@@ -199,7 +200,7 @@ func TestResetLedgerWithoutDroppingDBs(t *testing.T) {
 
 	// Reset All kv ledgers
 	blockstorePath := kvledger.BlockStorePath(env.initializer.Config.RootFSPath)
-	err := blkstorage.ResetBlockStore(blockstorePath)
+	err := blkstorage.ResetBlockStore(blockstorePath, env.initializer.Config.IsMmapEnabled)
 	require.NoError(t, err)
 	rebuildable := rebuildableStatedb | rebuildableBookkeeper | rebuildableConfigHistory | rebuildableHistoryDB
 	env.verifyRebuilablesExist(rebuildable)

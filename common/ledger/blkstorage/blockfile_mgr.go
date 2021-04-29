@@ -101,20 +101,20 @@ func newBlockfileMgr(id string, conf *Conf, indexConfig *IndexConfig, indexStore
 	}
 	if blockfilesInfo == nil {
 		logger.Info(`Getting block information from block storage`)
-		if blockfilesInfo, err = constructBlockfilesInfo(rootDir); err != nil {
+		if blockfilesInfo, err = constructBlockfilesInfo(rootDir, conf.isMmapEnabled); err != nil {
 			panic(fmt.Sprintf("Could not build blockfilesInfo info from block files: %s", err))
 		}
 		logger.Debugf("Info constructed by scanning the blocks dir = %s", spew.Sdump(blockfilesInfo))
 	} else {
 		logger.Debug(`Synching block information from block storage (if needed)`)
-		syncBlockfilesInfoFromFS(rootDir, blockfilesInfo)
+		syncBlockfilesInfoFromFS(rootDir, conf.isMmapEnabled, blockfilesInfo)
 	}
 	err = mgr.saveBlkfilesInfo(blockfilesInfo, true)
 	if err != nil {
 		panic(fmt.Sprintf("Could not save next block file info to db: %s", err))
 	}
 
-	currentFileWriter, err := newBlockfileWriter(deriveBlockfilePath(rootDir, blockfilesInfo.latestFileNumber))
+	currentFileWriter, err := newBlockfileWriter(deriveBlockfilePath(rootDir, blockfilesInfo.latestFileNumber), conf.isMmapEnabled)
 	if err != nil {
 		panic(fmt.Sprintf("Could not open writer to current file: %s", err))
 	}
@@ -203,7 +203,7 @@ func bootstrapFromSnapshottedTxIDs(
 	return nil
 }
 
-func syncBlockfilesInfoFromFS(rootDir string, blkfilesInfo *blockfilesInfo) {
+func syncBlockfilesInfoFromFS(rootDir string, isMmapEnabled bool, blkfilesInfo *blockfilesInfo) {
 	logger.Debugf("Starting blockfilesInfo=%s", blkfilesInfo)
 	//Checks if the file suffix of where the last block was written exists
 	filePath := deriveBlockfilePath(rootDir, blkfilesInfo.latestFileNumber)
@@ -221,7 +221,7 @@ func syncBlockfilesInfoFromFS(rootDir string, blkfilesInfo *blockfilesInfo) {
 	}
 	//Scan the file system to verify that the blockfilesInfo stored in db is correct
 	_, endOffsetLastBlock, numBlocks, err := scanForLastCompleteBlock(
-		rootDir, blkfilesInfo.latestFileNumber, int64(blkfilesInfo.latestFileSize))
+		rootDir, isMmapEnabled, blkfilesInfo.latestFileNumber, int64(blkfilesInfo.latestFileSize))
 	if err != nil {
 		panic(fmt.Sprintf("Could not open current file for detecting last block in the file: %s", err))
 	}
@@ -254,7 +254,7 @@ func (mgr *blockfileMgr) moveToNextFile() {
 		lastPersistedBlock: mgr.blockfilesInfo.lastPersistedBlock}
 
 	nextFileWriter, err := newBlockfileWriter(
-		deriveBlockfilePath(mgr.rootDir, blkfilesInfo.latestFileNumber))
+		deriveBlockfilePath(mgr.rootDir, blkfilesInfo.latestFileNumber), mgr.conf.isMmapEnabled)
 
 	if err != nil {
 		panic(fmt.Sprintf("Could not open writer to next file: %s", err))
@@ -391,7 +391,7 @@ func (mgr *blockfileMgr) syncIndex() error {
 	skipFirstBlock := false
 	endFileNum := mgr.blockfilesInfo.latestFileNumber
 
-	firstAvailableBlkNum, err := retrieveFirstBlockNumFromFile(mgr.rootDir, 0)
+	firstAvailableBlkNum, err := retrieveFirstBlockNumFromFile(mgr.rootDir, mgr.conf.isMmapEnabled, 0)
 	if err != nil {
 		return err
 	}
@@ -411,7 +411,7 @@ func (mgr *blockfileMgr) syncIndex() error {
 
 	//open a blockstream to the file location that was stored in the index
 	var stream *blockStream
-	if stream, err = newBlockStream(mgr.rootDir, startFileNum, int64(startOffset), endFileNum); err != nil {
+	if stream, err = newBlockStream(mgr.rootDir, mgr.conf.isMmapEnabled, startFileNum, int64(startOffset), endFileNum); err != nil {
 		return err
 	}
 	var blockBytes []byte
@@ -632,7 +632,7 @@ func (mgr *blockfileMgr) fetchTransactionEnvelope(lp *fileLocPointer) (*common.E
 }
 
 func (mgr *blockfileMgr) fetchBlockBytes(lp *fileLocPointer) ([]byte, error) {
-	stream, err := newBlockfileStream(mgr.rootDir, lp.fileSuffixNum, int64(lp.offset))
+	stream, err := newBlockfileStream(mgr.rootDir, mgr.conf.isMmapEnabled, lp.fileSuffixNum, int64(lp.offset))
 	if err != nil {
 		return nil, err
 	}
@@ -646,7 +646,7 @@ func (mgr *blockfileMgr) fetchBlockBytes(lp *fileLocPointer) ([]byte, error) {
 
 func (mgr *blockfileMgr) fetchRawBytes(lp *fileLocPointer) ([]byte, error) {
 	filePath := deriveBlockfilePath(mgr.rootDir, lp.fileSuffixNum)
-	reader, err := newBlockfileReader(filePath)
+	reader, err := newBlockfileReader(filePath, mgr.conf.isMmapEnabled)
 	if err != nil {
 		return nil, err
 	}
@@ -697,11 +697,11 @@ func (mgr *blockfileMgr) bootstrappedFromSnapshot() bool {
 
 // scanForLastCompleteBlock scan a given block file and detects the last offset in the file
 // after which there may lie a block partially written (towards the end of the file in a crash scenario).
-func scanForLastCompleteBlock(rootDir string, fileNum int, startingOffset int64) ([]byte, int64, int, error) {
+func scanForLastCompleteBlock(rootDir string, isMmapEnabled bool, fileNum int, startingOffset int64) ([]byte, int64, int, error) {
 	//scan the passed file number suffix starting from the passed offset to find the last completed block
 	numBlocks := 0
 	var lastBlockBytes []byte
-	blockStream, errOpen := newBlockfileStream(rootDir, fileNum, startingOffset)
+	blockStream, errOpen := newBlockfileStream(rootDir, isMmapEnabled, fileNum, startingOffset)
 	if errOpen != nil {
 		return nil, 0, 0, errOpen
 	}

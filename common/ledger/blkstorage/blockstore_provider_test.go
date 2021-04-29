@@ -37,7 +37,7 @@ func TestMultipleBlockStores(t *testing.T) {
 	tempdir := testPath()
 	defer os.RemoveAll(tempdir)
 
-	env := newTestEnv(t, NewConf(tempdir, 0))
+	env := newTestEnv(t, NewConf(tempdir, 0, true))
 	provider := env.provider
 	defer provider.Close()
 
@@ -65,7 +65,7 @@ func TestMultipleBlockStores(t *testing.T) {
 	provider.Close()
 
 	// Reopen provider
-	newenv := newTestEnv(t, NewConf(tempdir, 0))
+	newenv := newTestEnv(t, NewConf(tempdir, 0, true))
 	newprovider := newenv.provider
 	defer newprovider.Close()
 
@@ -160,7 +160,7 @@ func checkWithWrongInputs(t *testing.T, store *BlockStore, numBlocks int) {
 }
 
 func TestBlockStoreProvider(t *testing.T) {
-	env := newTestEnv(t, NewConf(testPath(), 0))
+	env := newTestEnv(t, NewConf(testPath(), 0, true))
 	defer env.Cleanup()
 
 	provider := env.provider
@@ -194,7 +194,7 @@ func TestBlockStoreProvider(t *testing.T) {
 }
 
 func TestRemove(t *testing.T) {
-	env := newTestEnv(t, NewConf(testPath(), 0))
+	env := newTestEnv(t, NewConf(testPath(), 0, true))
 	defer env.Cleanup()
 
 	provider := env.provider

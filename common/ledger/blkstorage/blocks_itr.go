@@ -46,7 +46,7 @@ func (itr *blocksItr) initStream() error {
 	if lp, err = itr.mgr.index.getBlockLocByBlockNum(itr.blockNumToRetrieve); err != nil {
 		return err
 	}
-	if itr.stream, err = newBlockStream(itr.mgr.rootDir, lp.fileSuffixNum, int64(lp.offset), -1); err != nil {
+	if itr.stream, err = newBlockStream(itr.mgr.rootDir, itr.mgr.conf.isMmapEnabled, lp.fileSuffixNum, int64(lp.offset), -1); err != nil {
 		return err
 	}
 	return nil

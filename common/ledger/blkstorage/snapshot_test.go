@@ -43,7 +43,7 @@ func TestBootstrapFromSnapshot(t *testing.T) {
 
 	setup := func() {
 		testDir = testPath()
-		env = newTestEnv(t, NewConf(testDir, 0))
+		env = newTestEnv(t, NewConf(testDir, 0, false))
 		snapshotDir = filepath.Join(testDir, "snapshot")
 		require.NoError(t, os.Mkdir(snapshotDir, 0755))
 
@@ -299,7 +299,7 @@ func TestBootstrapFromSnapshot(t *testing.T) {
 
 func TestBootstrapFromSnapshotErrorPaths(t *testing.T) {
 	testPath := testPath()
-	env := newTestEnv(t, NewConf(testPath, 0))
+	env := newTestEnv(t, NewConf(testPath, 0, false))
 	defer func() {
 		env.Cleanup()
 	}()
@@ -382,7 +382,7 @@ func TestBootstrapFromSnapshotErrorPaths(t *testing.T) {
 		createSnapshotDataFile("single-tx-id")
 		env.provider.Close()
 		defer func() {
-			env = newTestEnv(t, NewConf(testPath, 0))
+			env = newTestEnv(t, NewConf(testPath, 0, false))
 		}()
 		_, err := env.provider.BootstrapFromSnapshottedTxIDs(snapshotDir, snapshotInfo)
 		require.Contains(t, err.Error(), "error writing batch to leveldb")
@@ -395,7 +395,7 @@ func TestBootstrapFromSnapshotErrorPaths(t *testing.T) {
 		_, err := env.provider.BootstrapFromSnapshottedTxIDs(snapshotDir, snapshotInfo)
 		require.NoError(t, err)
 		env.provider.Close()
-		env = newTestEnv(t, NewConf(testPath, 0))
+		env = newTestEnv(t, NewConf(testPath, 0, false))
 		require.NoError(t, ioutil.WriteFile(bootstrappingSnapshotInfoFile, []byte("junk-data"), 0644))
 		_, err = env.provider.Open(snapshotInfo.LedgerID)
 		require.Contains(t, err.Error(), "error while unmarshalling bootstrappingSnapshotInfo")

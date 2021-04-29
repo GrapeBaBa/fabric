@@ -79,15 +79,15 @@ func TestV11CommitHashes(t *testing.T) {
 		description               string
 		v11SampleDataPath         string
 		preResetCommitHashExists  bool
-		resetFunc                 func(h *testhelper, ledgerFSRoot string)
+		resetFunc                 func(h *testhelper, ledgerFSRoot string, isMmapEnabled bool)
 		postResetCommitHashExists bool
 	}{
 		{
 			"Reset (no existing CommitHash)",
 			"testdata/v11/sample_ledgers/ledgersData.zip",
 			false,
-			func(h *testhelper, ledgerFSRoot string) {
-				require.NoError(t, kvledger.ResetAllKVLedgers(ledgerFSRoot))
+			func(h *testhelper, ledgerFSRoot string, isMmapEnabled bool) {
+				require.NoError(t, kvledger.ResetAllKVLedgers(ledgerFSRoot, isMmapEnabled))
 			},
 			true,
 		},
@@ -96,8 +96,8 @@ func TestV11CommitHashes(t *testing.T) {
 			"Rollback to genesis block (no existing CommitHash)",
 			"testdata/v11/sample_ledgers/ledgersData.zip",
 			false,
-			func(h *testhelper, ledgerFSRoot string) {
-				require.NoError(t, kvledger.RollbackKVLedger(ledgerFSRoot, h.lgrid, 0))
+			func(h *testhelper, ledgerFSRoot string, isMmapEnabled bool) {
+				require.NoError(t, kvledger.RollbackKVLedger(ledgerFSRoot, isMmapEnabled, h.lgrid, 0))
 			},
 			true,
 		},
@@ -106,8 +106,8 @@ func TestV11CommitHashes(t *testing.T) {
 			"Rollback to block other than genesis block (no existing CommitHash)",
 			"testdata/v11/sample_ledgers/ledgersData.zip",
 			false,
-			func(h *testhelper, ledgerFSRoot string) {
-				require.NoError(t, kvledger.RollbackKVLedger(ledgerFSRoot, h.lgrid, h.currentHeight()/2+1))
+			func(h *testhelper, ledgerFSRoot string, isMmapEnabled bool) {
+				require.NoError(t, kvledger.RollbackKVLedger(ledgerFSRoot, isMmapEnabled, h.lgrid, h.currentHeight()/2+1))
 			},
 			false,
 		},
@@ -116,8 +116,8 @@ func TestV11CommitHashes(t *testing.T) {
 			"Reset (existing CommitHash)",
 			"testdata/v11/sample_ledgers_with_commit_hashes/ledgersData.zip",
 			true,
-			func(h *testhelper, ledgerFSRoot string) {
-				require.NoError(t, kvledger.ResetAllKVLedgers(ledgerFSRoot))
+			func(h *testhelper, ledgerFSRoot string, isMmapEnabled bool) {
+				require.NoError(t, kvledger.ResetAllKVLedgers(ledgerFSRoot, isMmapEnabled))
 			},
 			true,
 		},
@@ -126,8 +126,8 @@ func TestV11CommitHashes(t *testing.T) {
 			"Rollback to genesis block (existing CommitHash)",
 			"testdata/v11/sample_ledgers_with_commit_hashes/ledgersData.zip",
 			true,
-			func(h *testhelper, ledgerFSRoot string) {
-				require.NoError(t, kvledger.RollbackKVLedger(ledgerFSRoot, h.lgrid, 0))
+			func(h *testhelper, ledgerFSRoot string, isMmapEnabled bool) {
+				require.NoError(t, kvledger.RollbackKVLedger(ledgerFSRoot, isMmapEnabled, h.lgrid, 0))
 			},
 			true,
 		},
@@ -136,8 +136,8 @@ func TestV11CommitHashes(t *testing.T) {
 			"Rollback to block other than genesis block (existing CommitHash)",
 			"testdata/v11/sample_ledgers_with_commit_hashes/ledgersData.zip",
 			true,
-			func(h *testhelper, ledgerFSRoot string) {
-				require.NoError(t, kvledger.RollbackKVLedger(ledgerFSRoot, h.lgrid, h.currentHeight()/2+1))
+			func(h *testhelper, ledgerFSRoot string, isMmapEnabled bool) {
+				require.NoError(t, kvledger.RollbackKVLedger(ledgerFSRoot, isMmapEnabled, h.lgrid, h.currentHeight()/2+1))
 			},
 			true,
 		},
@@ -161,13 +161,14 @@ func TestV11CommitHashes(t *testing.T) {
 func testV11CommitHashes(t *testing.T,
 	v11DataPath string,
 	preResetCommitHashExists bool,
-	resetFunc func(*testhelper, string),
+	resetFunc func(*testhelper, string, bool),
 	postResetCommitHashExists bool,
 ) {
 	env := newEnv(t)
 	defer env.cleanup()
 
 	ledgerFSRoot := env.initializer.Config.RootFSPath
+	isMmapEnabled := env.initializer.Config.IsMmapEnabled
 	// pass false so that 'ledgersData' directory will not be created when unzipped to ledgerFSRoot
 	require.NoError(t, testutil.Unzip(v11DataPath, ledgerFSRoot, false))
 
@@ -189,7 +190,7 @@ func testV11CommitHashes(t *testing.T,
 	}
 
 	env.closeLedgerMgmt()
-	resetFunc(h, ledgerFSRoot)
+	resetFunc(h, ledgerFSRoot, isMmapEnabled)
 	env.initLedgerMgmt()
 
 	h = env.newTestHelperOpenLgr("ledger1", t)

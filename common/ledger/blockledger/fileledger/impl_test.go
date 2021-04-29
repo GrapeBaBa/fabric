@@ -41,7 +41,7 @@ func initialize(t *testing.T) (*testEnv, *FileLedger) {
 	name, err := ioutil.TempDir("", "hyperledger_fabric")
 	assert.NoError(t, err, "Error creating temp dir: %s", err)
 
-	p, err := New(name, &disabled.Provider{})
+	p, err := New(name, true, &disabled.Provider{})
 	assert.NoError(t, err)
 	flf := p.(*fileLedgerFactory)
 	fl, err := flf.GetOrCreate("testchannelid")
@@ -158,7 +158,7 @@ func TestReinitialization(t *testing.T) {
 	tev.shutDown()
 
 	// re-initialize the ledger provider (not the test ledger itself!)
-	provider2, err := New(tev.location, &disabled.Provider{})
+	provider2, err := New(tev.location, true, &disabled.Provider{})
 	assert.NoError(t, err)
 
 	// assert expected ledgers exist

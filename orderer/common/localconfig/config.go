@@ -119,8 +119,9 @@ type Profile struct {
 
 // FileLedger contains configuration for the file-based ledger.
 type FileLedger struct {
-	Location string
-	Prefix   string
+	Location      string
+	Prefix        string
+	IsMmapEnabled bool
 }
 
 // Kafka contains configuration for the Kafka-based orderer.
@@ -244,8 +245,9 @@ var Defaults = TopLevel{
 		},
 	},
 	FileLedger: FileLedger{
-		Location: "/var/hyperledger/production/orderer",
-		Prefix:   "hyperledger-fabric-ordererledger",
+		Location:      "/var/hyperledger/production/orderer",
+		Prefix:        "hyperledger-fabric-ordererledger",
+		IsMmapEnabled: false,
 	},
 	Kafka: Kafka{
 		Retry: Retry{

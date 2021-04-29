@@ -42,7 +42,7 @@ func TestBlockIndexSync(t *testing.T) {
 func testBlockIndexSync(t *testing.T, numBlocks int, numBlocksToIndex int, syncByRestart bool) {
 	testName := fmt.Sprintf("%v/%v/%v", numBlocks, numBlocksToIndex, syncByRestart)
 	t.Run(testName, func(t *testing.T) {
-		env := newTestEnv(t, NewConf(testPath(), 0))
+		env := newTestEnv(t, NewConf(testPath(), 0, true))
 		defer env.Cleanup()
 		ledgerid := "testledger"
 		blkfileMgrWrapper := newTestBlockfileWrapper(env, ledgerid)
@@ -108,7 +108,7 @@ func testBlockIndexSelectiveIndexing(t *testing.T, indexItems []IndexableAttr) {
 		testName = testName + string(s)
 	}
 	t.Run(testName, func(t *testing.T) {
-		env := newTestEnvSelectiveIndexing(t, NewConf(testPath(), 0), indexItems, &disabled.Provider{})
+		env := newTestEnvSelectiveIndexing(t, NewConf(testPath(), 0, true), indexItems, &disabled.Provider{})
 		defer env.Cleanup()
 		blkfileMgrWrapper := newTestBlockfileWrapper(env, "testledger")
 		defer blkfileMgrWrapper.close()
@@ -262,7 +262,7 @@ func TestTxIDKeyDecodingInvalidInputs(t *testing.T) {
 }
 
 func TestExportUniqueTxIDs(t *testing.T) {
-	env := newTestEnv(t, NewConf(testPath(), 0))
+	env := newTestEnv(t, NewConf(testPath(), 0, true))
 	defer env.Cleanup()
 	ledgerid := "testledger"
 	blkfileMgrWrapper := newTestBlockfileWrapper(env, ledgerid)
@@ -327,7 +327,7 @@ func TestExportUniqueTxIDs(t *testing.T) {
 }
 
 func TestExportUniqueTxIDsWhenTxIDsNotIndexed(t *testing.T) {
-	env := newTestEnvSelectiveIndexing(t, NewConf(testPath(), 0), []IndexableAttr{IndexableAttrBlockNum}, &disabled.Provider{})
+	env := newTestEnvSelectiveIndexing(t, NewConf(testPath(), 0, true), []IndexableAttr{IndexableAttrBlockNum}, &disabled.Provider{})
 	defer env.Cleanup()
 	blkfileMgrWrapper := newTestBlockfileWrapper(env, "testledger")
 	defer blkfileMgrWrapper.close()
@@ -342,7 +342,7 @@ func TestExportUniqueTxIDsWhenTxIDsNotIndexed(t *testing.T) {
 }
 
 func TestExportUniqueTxIDsErrorCases(t *testing.T) {
-	env := newTestEnv(t, NewConf(testPath(), 0))
+	env := newTestEnv(t, NewConf(testPath(), 0, true))
 	defer env.Cleanup()
 	ledgerid := "testledger"
 	blkfileMgrWrapper := newTestBlockfileWrapper(env, ledgerid)

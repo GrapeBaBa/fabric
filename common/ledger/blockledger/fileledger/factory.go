@@ -62,9 +62,9 @@ func (flf *fileLedgerFactory) Close() {
 }
 
 // New creates a new ledger factory
-func New(directory string, metricsProvider metrics.Provider) (blockledger.Factory, error) {
+func New(directory string, isMmapEnabled bool, metricsProvider metrics.Provider) (blockledger.Factory, error) {
 	p, err := blkstorage.NewProvider(
-		blkstorage.NewConf(directory, -1),
+		blkstorage.NewConf(directory, -1, isMmapEnabled),
 		&blkstorage.IndexConfig{
 			AttrsToIndex: []blkstorage.IndexableAttr{blkstorage.IndexableAttrBlockNum}},
 		metricsProvider,

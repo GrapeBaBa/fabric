@@ -51,8 +51,10 @@ func ledgerConfig() *ledger.Config {
 	if snapshotsRootDir == "" {
 		snapshotsRootDir = filepath.Join(rootFSPath, "snapshots")
 	}
+	isMmapEnabled := viper.GetBool("ledger.mmap")
 	conf := &ledger.Config{
-		RootFSPath: rootFSPath,
+		RootFSPath:    rootFSPath,
+		IsMmapEnabled: isMmapEnabled,
 		StateDBConfig: &ledger.StateDBConfig{
 			StateDatabase: viper.GetString("ledger.state.stateDatabase"),
 			CouchDB:       &ledger.CouchDBConfig{},

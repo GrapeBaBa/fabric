@@ -23,7 +23,7 @@ func TestRollback(t *testing.T) {
 	path := testPath()
 	blocks := testutil.ConstructTestBlocks(t, 50) // 50 blocks persisted in ~5 block files
 	blocksPerFile := 50 / 5
-	env := newTestEnv(t, NewConf(path, 0))
+	env := newTestEnv(t, NewConf(path, 0, true))
 	defer env.Cleanup()
 	blkfileMgrWrapper := newTestBlockfileWrapper(env, "testLedger")
 	blkfileMgr := blkfileMgrWrapper.blockfileMgr
@@ -68,22 +68,22 @@ func TestRollback(t *testing.T) {
 
 	// 7. Rollback to one before the lastBlockNumberInLastFile
 	indexConfig := &IndexConfig{AttrsToIndex: attrsToIndex}
-	err = Rollback(path, "testLedger", lastBlockNumberInLastFile-uint64(1), indexConfig)
+	err = Rollback(path, blkfileMgr.conf.isMmapEnabled, "testLedger", lastBlockNumberInLastFile-uint64(1), indexConfig)
 	require.NoError(t, err)
 	assertBlockStoreRollback(t, path, "testLedger", blocks, lastBlockNumberInLastFile-uint64(1), 4, indexConfig)
 
 	// 8. Rollback to middleBlockNumberInLastFile
-	err = Rollback(path, "testLedger", middleBlockNumberInLastFile, indexConfig)
+	err = Rollback(path, blkfileMgr.conf.isMmapEnabled, "testLedger", middleBlockNumberInLastFile, indexConfig)
 	require.NoError(t, err)
 	assertBlockStoreRollback(t, path, "testLedger", blocks, middleBlockNumberInLastFile, 4, indexConfig)
 
 	// 9. Rollback to firstBlockNumberInLastFile
-	err = Rollback(path, "testLedger", firstBlockNumberInLastFile, indexConfig)
+	err = Rollback(path, blkfileMgr.conf.isMmapEnabled, "testLedger", firstBlockNumberInLastFile, indexConfig)
 	require.NoError(t, err)
 	assertBlockStoreRollback(t, path, "testLedger", blocks, firstBlockNumberInLastFile, 4, indexConfig)
 
 	// 10. Rollback to one before the firstBlockNumberInLastFile
-	err = Rollback(path, "testLedger", firstBlockNumberInLastFile-1, indexConfig)
+	err = Rollback(path, blkfileMgr.conf.isMmapEnabled, "testLedger", firstBlockNumberInLastFile-1, indexConfig)
 	require.NoError(t, err)
 	assertBlockStoreRollback(t, path, "testLedger", blocks, firstBlockNumberInLastFile-1, 3, indexConfig)
 
@@ -91,17 +91,17 @@ func TestRollback(t *testing.T) {
 	middleBlockNumberInMiddleFile := uint64(25)
 
 	// 12. Rollback to middleBlockNumberInMiddleFile
-	err = Rollback(path, "testLedger", middleBlockNumberInMiddleFile, indexConfig)
+	err = Rollback(path, blkfileMgr.conf.isMmapEnabled, "testLedger", middleBlockNumberInMiddleFile, indexConfig)
 	require.NoError(t, err)
 	assertBlockStoreRollback(t, path, "testLedger", blocks, middleBlockNumberInMiddleFile, 2, indexConfig)
 
 	// 13. Rollback to block 5
-	err = Rollback(path, "testLedger", 5, indexConfig)
+	err = Rollback(path, blkfileMgr.conf.isMmapEnabled, "testLedger", 5, indexConfig)
 	require.NoError(t, err)
 	assertBlockStoreRollback(t, path, "testLedger", blocks, 5, 0, indexConfig)
 
 	// 14. Rollback to block 1
-	err = Rollback(path, "testLedger", 1, indexConfig)
+	err = Rollback(path, blkfileMgr.conf.isMmapEnabled, "testLedger", 1, indexConfig)
 	require.NoError(t, err)
 	assertBlockStoreRollback(t, path, "testLedger", blocks, 1, 0, indexConfig)
 }
@@ -115,7 +115,7 @@ func TestRollbackWithOnlyBlockIndexAttributes(t *testing.T) {
 	onlyBlockNumIndex := []IndexableAttr{
 		IndexableAttrBlockNum,
 	}
-	env := newTestEnvSelectiveIndexing(t, NewConf(path, 0), onlyBlockNumIndex, &disabled.Provider{})
+	env := newTestEnvSelectiveIndexing(t, NewConf(path, 0, true), onlyBlockNumIndex, &disabled.Provider{})
 	defer env.Cleanup()
 	blkfileMgrWrapper := newTestBlockfileWrapper(env, "testLedger")
 	blkfileMgr := blkfileMgrWrapper.blockfileMgr
@@ -155,7 +155,7 @@ func TestRollbackWithOnlyBlockIndexAttributes(t *testing.T) {
 	onlyBlockNumIndexCfg := &IndexConfig{
 		AttrsToIndex: onlyBlockNumIndex,
 	}
-	err = Rollback(path, "testLedger", 2, onlyBlockNumIndexCfg)
+	err = Rollback(path, blkfileMgr.conf.isMmapEnabled, "testLedger", 2, onlyBlockNumIndexCfg)
 	require.NoError(t, err)
 	assertBlockStoreRollback(t, path, "testLedger", blocks, 2, 0, onlyBlockNumIndexCfg)
 }
@@ -164,7 +164,7 @@ func TestRollbackWithNoIndexDir(t *testing.T) {
 	path := testPath()
 	blocks := testutil.ConstructTestBlocks(t, 50)
 	blocksPerFile := 50 / 5
-	conf := NewConf(path, 0)
+	conf := NewConf(path, 0, true)
 	env := newTestEnv(t, conf)
 	defer env.Cleanup()
 	blkfileMgrWrapper := newTestBlockfileWrapper(env, "testLedger")
@@ -208,31 +208,31 @@ func TestRollbackWithNoIndexDir(t *testing.T) {
 
 	// 6. Rollback to block 2
 	indexConfig := &IndexConfig{AttrsToIndex: attrsToIndex}
-	err = Rollback(path, "testLedger", 2, indexConfig)
+	err = Rollback(path, blkfileMgr.conf.isMmapEnabled, "testLedger", 2, indexConfig)
 	require.NoError(t, err)
 	assertBlockStoreRollback(t, path, "testLedger", blocks, 2, 0, indexConfig)
 }
 
 func TestValidateRollbackParams(t *testing.T) {
 	path := testPath()
-	env := newTestEnv(t, NewConf(path, 1024*24))
+	env := newTestEnv(t, NewConf(path, 1024*24, true))
 	defer env.Cleanup()
 
 	blkfileMgrWrapper := newTestBlockfileWrapper(env, "testLedger")
-
+	blkfileMgr := blkfileMgrWrapper.blockfileMgr
 	// 1. Create 10 blocks
 	blocks := testutil.ConstructTestBlocks(t, 10)
 	blkfileMgrWrapper.addBlocks(blocks)
 
 	// 2. Valid inputs
-	err := ValidateRollbackParams(path, "testLedger", 5)
+	err := ValidateRollbackParams(path, blkfileMgr.conf.isMmapEnabled, "testLedger", 5)
 	require.NoError(t, err)
 
 	// 3. ledgerID does not exist
-	err = ValidateRollbackParams(path, "noLedger", 5)
+	err = ValidateRollbackParams(path, blkfileMgr.conf.isMmapEnabled, "noLedger", 5)
 	require.Equal(t, "ledgerID [noLedger] does not exist", err.Error())
 
-	err = ValidateRollbackParams(path, "testLedger", 15)
+	err = ValidateRollbackParams(path, blkfileMgr.conf.isMmapEnabled, "testLedger", 15)
 	require.Equal(t, "target block number [15] should be less than the biggest block number [9]", err.Error())
 }
 
@@ -240,9 +240,10 @@ func TestDuplicateTxIDDuringRollback(t *testing.T) {
 	path := testPath()
 	blocks := testutil.ConstructTestBlocks(t, 4)
 	maxFileSize := 1024 * 1024 * 4
-	env := newTestEnv(t, NewConf(path, maxFileSize))
+	env := newTestEnv(t, NewConf(path, maxFileSize, true))
 	defer env.Cleanup()
 	blkfileMgrWrapper := newTestBlockfileWrapper(env, "testLedger")
+	blkfileMgr := blkfileMgrWrapper.blockfileMgr
 	blocks[3].Metadata.Metadata[common.BlockMetadataIndex_TRANSACTIONS_FILTER][0] = byte(peer.TxValidationCode_DUPLICATE_TXID)
 	testutil.SetTxID(t, blocks[3], 0, "tx0")
 	testutil.SetTxID(t, blocks[2], 0, "tx0")
@@ -268,12 +269,12 @@ func TestDuplicateTxIDDuringRollback(t *testing.T) {
 
 	// 5. Rollback to block 2
 	indexConfig := &IndexConfig{AttrsToIndex: attrsToIndex}
-	err := Rollback(path, "testLedger", 2, indexConfig)
+	err := Rollback(path, blkfileMgr.conf.isMmapEnabled, "testLedger", 2, indexConfig)
 	require.NoError(t, err)
 
-	env = newTestEnv(t, NewConf(path, maxFileSize))
+	env = newTestEnv(t, NewConf(path, maxFileSize, true))
 	blkfileMgrWrapper = newTestBlockfileWrapper(env, "testLedger")
-
+	blkfileMgr = blkfileMgrWrapper.blockfileMgr
 	// 6. Check the BlockchainInfo
 	expectedBlockchainInfo = &common.BlockchainInfo{
 		Height:            3,
@@ -290,7 +291,7 @@ func TestDuplicateTxIDDuringRollback(t *testing.T) {
 func assertBlockStoreRollback(t *testing.T, path, ledgerID string, blocks []*common.Block,
 	rollbackedToBlkNum uint64, lastFileSuffixNum int, indexConfig *IndexConfig) {
 
-	env := newTestEnvSelectiveIndexing(t, NewConf(path, 0), indexConfig.AttrsToIndex, &disabled.Provider{})
+	env := newTestEnvSelectiveIndexing(t, NewConf(path, 0, true), indexConfig.AttrsToIndex, &disabled.Provider{})
 	blkfileMgrWrapper := newTestBlockfileWrapper(env, ledgerID)
 
 	// 1. Check the BlockchainInfo after the rollback

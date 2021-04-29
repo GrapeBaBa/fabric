@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package blkstorage
 
 import (
+	"github.com/akrylysov/pogreb/fs"
 	"os"
 	"testing"
 
@@ -17,7 +18,7 @@ import (
 )
 
 func TestBlockFileScanSmallTxOnly(t *testing.T) {
-	env := newTestEnv(t, NewConf(testPath(), 0))
+	env := newTestEnv(t, NewConf(testPath(), 0, true))
 	defer env.Cleanup()
 	ledgerid := "testLedger"
 	blkfileMgrWrapper := newTestBlockfileWrapper(env, ledgerid)
@@ -33,7 +34,7 @@ func TestBlockFileScanSmallTxOnly(t *testing.T) {
 	_, fileSize, err := util.FileExists(filePath)
 	require.NoError(t, err)
 
-	lastBlockBytes, endOffsetLastBlock, numBlocks, err := scanForLastCompleteBlock(env.provider.conf.getLedgerBlockDir(ledgerid), 0, 0)
+	lastBlockBytes, endOffsetLastBlock, numBlocks, err := scanForLastCompleteBlock(env.provider.conf.getLedgerBlockDir(ledgerid), true, 0, 0)
 	require.NoError(t, err)
 	require.Equal(t, len(blocks), numBlocks)
 	require.Equal(t, fileSize, endOffsetLastBlock)
@@ -44,7 +45,7 @@ func TestBlockFileScanSmallTxOnly(t *testing.T) {
 }
 
 func TestBlockFileScanSmallTxLastTxIncomplete(t *testing.T) {
-	env := newTestEnv(t, NewConf(testPath(), 0))
+	env := newTestEnv(t, NewConf(testPath(), 0, true))
 	defer env.Cleanup()
 	ledgerid := "testLedger"
 	blkfileMgrWrapper := newTestBlockfileWrapper(env, ledgerid)
@@ -60,13 +61,15 @@ func TestBlockFileScanSmallTxLastTxIncomplete(t *testing.T) {
 	_, fileSize, err := util.FileExists(filePath)
 	require.NoError(t, err)
 
-	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0660)
+	//TODO: KAI ADD NON MMAP TEST
+	fileSystem := fs.OSMMap
+	file, err := fileSystem.OpenFile(filePath, os.O_RDWR|os.O_CREATE, 0660)
 	require.NoError(t, err)
 	defer file.Close()
 	err = file.Truncate(fileSize - 1)
 	require.NoError(t, err)
 
-	lastBlockBytes, _, numBlocks, err := scanForLastCompleteBlock(env.provider.conf.getLedgerBlockDir(ledgerid), 0, 0)
+	lastBlockBytes, _, numBlocks, err := scanForLastCompleteBlock(env.provider.conf.getLedgerBlockDir(ledgerid), true, 0, 0)
 	require.NoError(t, err)
 	require.Equal(t, len(blocks)-1, numBlocks)
 

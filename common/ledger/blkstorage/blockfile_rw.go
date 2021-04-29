@@ -9,17 +9,19 @@ package blkstorage
 import (
 	"os"
 
+	"github.com/akrylysov/pogreb/fs"
 	"github.com/pkg/errors"
 )
 
 ////  WRITER ////
 type blockfileWriter struct {
-	filePath string
-	file     *os.File
+	filePath      string
+	file          fs.File
+	isMmapEnabled bool
 }
 
-func newBlockfileWriter(filePath string) (*blockfileWriter, error) {
-	writer := &blockfileWriter{filePath: filePath}
+func newBlockfileWriter(filePath string, isMmapEnabled bool) (*blockfileWriter, error) {
+	writer := &blockfileWriter{filePath: filePath, isMmapEnabled: isMmapEnabled}
 	return writer, writer.open()
 }
 
@@ -46,7 +48,13 @@ func (w *blockfileWriter) append(b []byte, sync bool) error {
 }
 
 func (w *blockfileWriter) open() error {
-	file, err := os.OpenFile(w.filePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0660)
+	var fileSystem fs.FileSystem
+	if w.isMmapEnabled {
+		fileSystem = fs.OSMMap
+	} else {
+		fileSystem = fs.OS
+	}
+	file, err := fileSystem.OpenFile(w.filePath, os.O_RDWR|os.O_CREATE, 0660)
 	if err != nil {
 		return errors.Wrapf(err, "error opening block file writer for file %s", w.filePath)
 	}
@@ -60,15 +68,22 @@ func (w *blockfileWriter) close() error {
 
 ////  READER ////
 type blockfileReader struct {
-	file *os.File
+	file          fs.File
+	isMmapEnabled bool
 }
 
-func newBlockfileReader(filePath string) (*blockfileReader, error) {
-	file, err := os.OpenFile(filePath, os.O_RDONLY, 0600)
+func newBlockfileReader(filePath string, isMmapEnabled bool) (*blockfileReader, error) {
+	var fileSystem fs.FileSystem
+	if isMmapEnabled {
+		fileSystem = fs.OSMMap
+	} else {
+		fileSystem = fs.OS
+	}
+	file, err := fileSystem.OpenFile(filePath, os.O_RDONLY, 0600)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error opening block file reader for file %s", filePath)
 	}
-	reader := &blockfileReader{file}
+	reader := &blockfileReader{file, isMmapEnabled}
 	return reader, nil
 }
 
