@@ -38,8 +38,12 @@ func compile(policy *cb.SignaturePolicy, identities []*mb.MSPPrincipal) (func([]
 
 		}
 		return func(signedData []msp.Identity, used []bool) bool {
-			grepKey := time.Now().UnixNano()
-			cauthdslLogger.Debugf("%p gate %d evaluation starts", signedData, grepKey)
+			var grepKey int64
+			if cauthdslLogger.IsEnabledFor(zapcore.DebugLevel) {
+				grepKey = time.Now().UnixNano()
+				cauthdslLogger.Debugf("%p gate %d evaluation starts", signedData, grepKey)
+			}
+
 			verified := int32(0)
 			_used := make([]bool, len(used))
 			for _, policy := range policies {
@@ -51,9 +55,13 @@ func compile(policy *cb.SignaturePolicy, identities []*mb.MSPPrincipal) (func([]
 			}
 
 			if verified >= t.NOutOf.N {
-				cauthdslLogger.Debugf("%p gate %d evaluation succeeds", signedData, grepKey)
+				if cauthdslLogger.IsEnabledFor(zapcore.DebugLevel) {
+					cauthdslLogger.Debugf("%p gate %d evaluation succeeds", signedData, grepKey)
+				}
 			} else {
-				cauthdslLogger.Debugf("%p gate %d evaluation fails", signedData, grepKey)
+				if cauthdslLogger.IsEnabledFor(zapcore.DebugLevel) {
+					cauthdslLogger.Debugf("%p gate %d evaluation fails", signedData, grepKey)
+				}
 			}
 
 			return verified >= t.NOutOf.N
