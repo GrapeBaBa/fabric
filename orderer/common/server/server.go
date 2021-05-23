@@ -8,6 +8,7 @@ package server
 
 import (
 	"fmt"
+	"github.com/hyperledger/fabric/common/metrics/disabled"
 	"io/ioutil"
 	"os"
 	"runtime/debug"
@@ -91,11 +92,13 @@ func NewServer(
 	mutualTLS bool,
 	expirationCheckDisabled bool,
 ) ab.AtomicBroadcastServer {
+	_, ok := metricsProvider.(*disabled.Provider)
 	s := &server{
 		dh: deliver.NewHandler(deliverSupport{Registrar: r}, timeWindow, mutualTLS, deliver.NewMetrics(metricsProvider), expirationCheckDisabled),
 		bh: &broadcast.Handler{
-			SupportRegistrar: broadcastSupport{Registrar: r},
-			Metrics:          broadcast.NewMetrics(metricsProvider),
+			SupportRegistrar:  broadcastSupport{Registrar: r},
+			Metrics:           broadcast.NewMetrics(metricsProvider),
+			IsMetricsDisabled: ok,
 		},
 		debug:     debug,
 		Registrar: r,

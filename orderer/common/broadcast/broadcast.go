@@ -58,8 +58,9 @@ type Consenter interface {
 
 // Handler is designed to handle connections from Broadcast AB gRPC service
 type Handler struct {
-	SupportRegistrar ChannelSupportRegistrar
-	Metrics          *Metrics
+	SupportRegistrar  ChannelSupportRegistrar
+	Metrics           *Metrics
+	IsMetricsDisabled bool
 }
 
 // Handle reads requests from a Broadcast stream, processes them, and returns the responses to the stream
@@ -98,9 +99,13 @@ type MetricsTracker struct {
 	ChannelID         string
 	TxType            string
 	Metrics           *Metrics
+	IsMetricsDisabled bool
 }
 
 func (mt *MetricsTracker) Record(resp *ab.BroadcastResponse) {
+	if mt.IsMetricsDisabled {
+		return
+	}
 	labels := []string{
 		"status", resp.Status.String(),
 		"channel", mt.ChannelID,
@@ -121,23 +126,33 @@ func (mt *MetricsTracker) Record(resp *ab.BroadcastResponse) {
 }
 
 func (mt *MetricsTracker) BeginValidate() {
+	if mt.IsMetricsDisabled {
+		return
+	}
 	mt.ValidateStartTime = time.Now()
 }
 
 func (mt *MetricsTracker) EndValidate() {
+	if mt.IsMetricsDisabled {
+		return
+	}
 	mt.ValidateDuration = time.Since(mt.ValidateStartTime)
 }
 
 func (mt *MetricsTracker) BeginEnqueue() {
+	if mt.IsMetricsDisabled {
+		return
+	}
 	mt.EnqueueStartTime = time.Now()
 }
 
 // ProcessMessage validates and enqueues a single message
 func (bh *Handler) ProcessMessage(msg *cb.Envelope, addr string) (resp *ab.BroadcastResponse) {
 	tracker := &MetricsTracker{
-		ChannelID: "unknown",
-		TxType:    "unknown",
-		Metrics:   bh.Metrics,
+		ChannelID:         "unknown",
+		TxType:            "unknown",
+		Metrics:           bh.Metrics,
+		IsMetricsDisabled: bh.IsMetricsDisabled,
 	}
 	defer func() {
 		// This looks a little unnecessary, but if done directly as
