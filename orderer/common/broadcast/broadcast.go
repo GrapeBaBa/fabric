@@ -69,9 +69,9 @@ type Handler struct {
 func (bh *Handler) Handle(srv ab.AtomicBroadcast_BroadcastServer) error {
 	addr := util.ExtractRemoteAddress(srv.Context())
 	logger.Debugf("Starting new broadcast loop for %s", addr)
-	respChan := make(chan chan *ab.BroadcastResponse, 20000)
-	errChan := make(chan error, 20000)
-	sem := semaphore.New(runtime.NumCPU() * 256)
+	respChan := make(chan chan *ab.BroadcastResponse, 60000)
+	errChan := make(chan error, 60000)
+	sem := semaphore.New(runtime.NumCPU())
 	go func() {
 		for {
 			select {
