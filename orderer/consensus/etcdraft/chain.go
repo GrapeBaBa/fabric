@@ -251,7 +251,7 @@ func NewChain(
 		rpc:              rpc,
 		channelID:        support.ChannelID(),
 		raftID:           opts.RaftID,
-		submitC:          make(chan *submit),
+		submitC:          make(chan *submit, 50000),
 		applyC:           make(chan apply),
 		haltC:            make(chan struct{}),
 		doneC:            make(chan struct{}),
@@ -399,11 +399,11 @@ func (c *Chain) WaitReady() error {
 		return err
 	}
 
-	select {
-	case c.submitC <- nil:
-	case <-c.doneC:
-		return errors.Errorf("chain is stopped")
-	}
+	//select {
+	//case c.submitC <- nil:
+	//case <-c.doneC:
+	//	return errors.Errorf("chain is stopped")
+	//}
 
 	return nil
 }
