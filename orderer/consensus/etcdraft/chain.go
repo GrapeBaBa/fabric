@@ -264,7 +264,7 @@ func NewChain(
 		channelID:        support.ChannelID(),
 		raftID:           opts.RaftID,
 		requestChans:     requestChans,
-		submitC:          make(chan *submit, 50000),
+		submitC:          make(chan *submit, 200000),
 		applyC:           make(chan apply),
 		haltC:            make(chan struct{}),
 		doneC:            make(chan struct{}),
@@ -593,7 +593,7 @@ func (c *Chain) run() {
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	// multiple propose goroutines
-	for i := 0; i < 8; i++ {
+	for i := 0; i < runtime.NumCPU(); i++ {
 		go func() {
 			ticking := false
 			timer := c.clock.NewTimer(time.Second)
