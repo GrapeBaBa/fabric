@@ -134,8 +134,10 @@ func (bh *Handler) Handle(srv ab.AtomicBroadcast_BroadcastServer) error {
 	for {
 		select {
 		case err := <-errChan:
+			logger.Warningf("broadcast err %v", err)
 			return err
 		case <-srv.Context().Done():
+			logger.Warningf("broadcast context err %v", srv.Context().Err())
 			return srv.Context().Err()
 		}
 
