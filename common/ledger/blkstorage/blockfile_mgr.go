@@ -310,7 +310,7 @@ func (mgr *blockfileMgr) addBlock(block *common.Block) error {
 	err = mgr.currentFileWriter.append(blockBytesEncodedLen, false)
 	if err == nil {
 		//append the actual block bytes to the file
-		err = mgr.currentFileWriter.append(blockBytes, true)
+		err = mgr.currentFileWriter.append(blockBytes, false)
 	}
 	if err != nil {
 		truncateErr := mgr.currentFileWriter.truncateFile(mgr.blockfilesInfo.latestFileSize)

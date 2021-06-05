@@ -26,6 +26,12 @@ func UnmarshalBlock(encoded []byte) (*cb.Block, error) {
 	return block, errors.Wrap(err, "error unmarshaling Block")
 }
 
+func UnmarshalBlockData(encoded []byte) (*cb.BlockData, error) {
+	blockData := &cb.BlockData{}
+	err := proto.Unmarshal(encoded, blockData)
+	return blockData, errors.Wrap(err, "error unmarshaling BlockData")
+}
+
 // UnmarshalChaincodeDeploymentSpec unmarshals bytes to a ChaincodeDeploymentSpec
 func UnmarshalChaincodeDeploymentSpec(code []byte) (*peer.ChaincodeDeploymentSpec, error) {
 	cds := &peer.ChaincodeDeploymentSpec{}
@@ -186,6 +192,14 @@ func UnmarshalBlockOrPanic(encoded []byte) *cb.Block {
 		panic(err)
 	}
 	return block
+}
+
+func UnmarshalBlockDataOrPanic(encoded []byte) *cb.BlockData {
+	blockData, err := UnmarshalBlockData(encoded)
+	if err != nil {
+		panic(err)
+	}
+	return blockData
 }
 
 // UnmarshalChannelHeaderOrPanic unmarshals bytes to a ChannelHeader or panics

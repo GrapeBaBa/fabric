@@ -93,7 +93,7 @@ func (r *receiver) Ordered(msg *cb.Envelope) (messageBatches [][]*cb.Envelope, p
 		messageBatches = append(messageBatches, []*cb.Envelope{msg})
 
 		// Record that this batch took no time to fill
-		r.Metrics.BlockFillDuration.With("channel", r.ChannelID).Observe(0)
+		//r.Metrics.BlockFillDuration.With("channel", r.ChannelID).Observe(0)
 
 		return
 	}
@@ -125,9 +125,9 @@ func (r *receiver) Ordered(msg *cb.Envelope) (messageBatches [][]*cb.Envelope, p
 
 // Cut returns the current batch and starts a new one
 func (r *receiver) Cut() []*cb.Envelope {
-	if r.pendingBatch != nil {
-		r.Metrics.BlockFillDuration.With("channel", r.ChannelID).Observe(time.Since(r.PendingBatchStartTime).Seconds())
-	}
+	//if r.pendingBatch != nil {
+	//	r.Metrics.BlockFillDuration.With("channel", r.ChannelID).Observe(time.Since(r.PendingBatchStartTime).Seconds())
+	//}
 	r.PendingBatchStartTime = time.Time{}
 	batch := r.pendingBatch
 	r.pendingBatch = nil

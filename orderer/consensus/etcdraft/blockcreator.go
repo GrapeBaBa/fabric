@@ -44,3 +44,30 @@ func (bc *blockCreator) createNextBlock(envs []*cb.Envelope) *cb.Block {
 	bc.hash = protoutil.BlockHeaderHash(block.Header)
 	return block
 }
+
+func (bc *blockCreator) createNextBlockData(envs []*cb.Envelope) *cb.BlockData {
+	data := &cb.BlockData{
+		Data: make([][]byte, len(envs)),
+	}
+
+	var err error
+	for i, env := range envs {
+		data.Data[i], err = proto.Marshal(env)
+		if err != nil {
+			bc.logger.Panicf("Could not marshal envelope: %s", err)
+		}
+	}
+
+	return data
+}
+
+func (bc *blockCreator) createNextBlock1(bd *cb.BlockData) *cb.Block {
+	bc.number++
+
+	block := protoutil.NewBlock(bc.number, bc.hash)
+	block.Header.DataHash = protoutil.BlockDataHash(bd)
+	block.Data = bd
+
+	bc.hash = protoutil.BlockHeaderHash(block.Header)
+	return block
+}
