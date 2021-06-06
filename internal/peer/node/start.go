@@ -1131,6 +1131,10 @@ func secureDialOpts(credSupport *comm.CredentialSupport) func() []grpc.DialOptio
 			dialOpts,
 			grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(comm.MaxRecvMsgSize), grpc.MaxCallSendMsgSize(comm.MaxSendMsgSize)),
 		)
+		dialOpts = append(dialOpts, grpc.WithReadBufferSize(comm.MaxReadBufSize))
+		dialOpts = append(dialOpts, grpc.WithWriteBufferSize(comm.MaxWriteBufSize))
+		dialOpts = append(dialOpts, grpc.WithInitialWindowSize(int32(comm.MaxInitialWindowSize)))
+		dialOpts = append(dialOpts, grpc.WithInitialConnWindowSize(int32(comm.MaxInitialConnWindowSize)))
 		// set the keepalive options
 		kaOpts := comm.DefaultKeepaliveOptions
 		if viper.IsSet("peer.keepalive.client.interval") {

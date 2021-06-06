@@ -28,6 +28,11 @@ type GRPCClient struct {
 	maxRecvMsgSize int
 	// Maximum message size the client can send
 	maxSendMsgSize int
+
+	maxReadBufferSize        int
+	maxWriteBufferSize       int
+	maxInitialWindowSize     int
+	maxInitialConnWindowSize int
 }
 
 // NewGRPCClient creates a new implementation of GRPCClient given an address
@@ -59,6 +64,10 @@ func NewGRPCClient(config ClientConfig) (*GRPCClient, error) {
 	// set send/recv message size to package defaults
 	client.maxRecvMsgSize = MaxRecvMsgSize
 	client.maxSendMsgSize = MaxSendMsgSize
+	client.maxReadBufferSize = MaxReadBufSize
+	client.maxWriteBufferSize = MaxWriteBufSize
+	client.maxInitialConnWindowSize = MaxInitialConnWindowSize
+	client.maxInitialWindowSize = MaxInitialWindowSize
 
 	return client, nil
 }
@@ -200,6 +209,10 @@ func (client *GRPCClient) NewConnection(address string, tlsOptions ...TLSOption)
 		grpc.MaxCallSendMsgSize(client.maxSendMsgSize),
 	))
 
+	dialOpts = append(dialOpts, grpc.WithReadBufferSize(client.maxReadBufferSize))
+	dialOpts = append(dialOpts, grpc.WithWriteBufferSize(client.maxWriteBufferSize))
+	dialOpts = append(dialOpts, grpc.WithInitialWindowSize(int32(client.maxInitialWindowSize)))
+	dialOpts = append(dialOpts, grpc.WithInitialConnWindowSize(int32(client.maxInitialConnWindowSize)))
 	ctx, cancel := context.WithTimeout(context.Background(), client.timeout)
 	defer cancel()
 	conn, err := grpc.DialContext(ctx, address, dialOpts...)
