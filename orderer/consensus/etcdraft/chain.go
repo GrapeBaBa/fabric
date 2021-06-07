@@ -593,7 +593,7 @@ func (c *Chain) run() {
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	// multiple propose goroutines
-	for i := 0; i < runtime.NumCPU()/2; i++ {
+	for i := 0; i < runtime.NumCPU(); i++ {
 		go func() {
 			ticking := false
 			timer := c.clock.NewTimer(time.Second)
