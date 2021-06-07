@@ -20,10 +20,10 @@ import (
 // Configuration defaults
 var (
 	// Max send and receive bytes for grpc clients and servers
-	MaxRecvMsgSize           = 128 * 1024 * 1024
-	MaxSendMsgSize           = 128 * 1024 * 1024
-	MaxWriteBufSize          = 16 * 1024 * 1024
-	MaxReadBufSize           = 16 * 1024 * 1024
+	MaxRecvMsgSize           = 32 * 1024 * 1024
+	MaxSendMsgSize           = 32 * 1024 * 1024
+	MaxWriteBufSize          = 8 * 1024 * 1024
+	MaxReadBufSize           = 8 * 1024 * 1024
 	MaxInitialWindowSize     = 1024 * 1024
 	MaxInitialConnWindowSize = 1024 * 1024
 	// Default peer keepalive options
