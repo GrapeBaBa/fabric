@@ -139,6 +139,8 @@ func (bh *Handler) Handle(srv ab.AtomicBroadcast_BroadcastServer) error {
 		case <-srv.Context().Done():
 			logger.Warningf("broadcast context err %v", srv.Context().Err())
 			return srv.Context().Err()
+		default:
+			continue
 		}
 
 		//msg, err := srv.Recv()
