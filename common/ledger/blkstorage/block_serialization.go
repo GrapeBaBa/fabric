@@ -26,7 +26,8 @@ type txindexInfo struct {
 }
 
 func serializeBlock(block *common.Block) ([]byte, *serializedBlockInfo, error) {
-	buf := proto.NewBuffer(nil)
+	initSlice := make([]byte, 0, 4096)
+	buf := proto.NewBuffer(initSlice)
 	var err error
 	info := &serializedBlockInfo{}
 	info.blockHeader = block.Header
