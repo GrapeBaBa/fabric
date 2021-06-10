@@ -10,6 +10,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/felixge/fgprof"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -268,6 +269,7 @@ func Main() {
 	}
 
 	if conf.General.Profile.Enabled {
+		http.DefaultServeMux.Handle("/debug/fgprof", fgprof.Handler())
 		go initializeProfilingService(conf)
 	}
 	ab.RegisterAtomicBroadcastServer(grpcServer.Server(), server)
